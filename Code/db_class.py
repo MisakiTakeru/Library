@@ -13,12 +13,14 @@ class Book(Base):
     title = Column(String)
     author = Column(String)
     release_date = Column(String)
+    borrow_status = Column(JSON)
     
-    def __init__(self, isbn, title, author, release_date):
+    def __init__(self, isbn, title, author, release_date, borrow_status = {}):
         self.isbn = isbn
         self.title = title
         self.author = author
         self.release_date = release_date
+        self.borrow_status = borrow_status
 
 
 class User(Base):
