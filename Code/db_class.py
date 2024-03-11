@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import uuid
-from sqlalchemy import Column, Integer, String, Float, JSON
+from sqlalchemy import Column, Integer, String, Float, JSON, Boolean
 from sqlalchemy.orm import declarative_base, Mapped
 
 Base = declarative_base() #Base class from sqlalchemy
@@ -13,12 +13,16 @@ class Book(Base):
     title = Column(String)
     author = Column(String)
     release_date = Column(String)
+    borrow_by = Column(Integer) #user id
+    borrow_status = Column(Boolean)
     
-    def __init__(self, isbn, title, author, release_date):
+    def __init__(self, isbn, title, author, release_date, borrow_by = 0, borrow_status = False):
         self.isbn = isbn
         self.title = title
         self.author = author
         self.release_date = release_date
+        self.borrow_by = borrow_by
+        self.borrow_status = borrow_status
 
 
 class User(Base):

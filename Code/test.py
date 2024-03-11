@@ -1,6 +1,7 @@
 import unittest
 from factory import Factory
 from singletonDatabaseConnect import SingletonDatabaseConnect
+from handler import Datahandler
 #python -m unittest test.py
 
 class TestData(unittest.TestCase):
@@ -9,16 +10,16 @@ class TestData(unittest.TestCase):
             "name": "John Doe",
             "address": "1234 Main St",
             "email": "john@doe.com",
-            "borrowed": { 1: 1619827200,
-                                2: 1619913600,
-                                3: 1620000000 },
+            "borrowed": [1], #list of borrowed book id
         }
 
         self.book_data = {
-            "ISBN": 1234567890,
+            "isbn": "1234567890",
             "title": "John Book",
             "author": "John Doe",
             "release_date": 1619827200,
+            "borrow_by": 1,
+            "borrow_status": True
         }
 
 class TestSingletonDatabaseConnect(unittest.TestCase):
@@ -56,6 +57,45 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         session.commit()
 
         self.assertTrue(user.id)
+    
+    def test_insert_book(self):
+        factory = Factory("book")
+        book = factory.create(self.book_data)
+        session = self.db.get_session()
+        engine = self.db.get_engine()
+
+        type(book).metadata.create_all(engine)
+
+        session.add(book)
+        session.commit()
+
+        self.assertTrue(book.id)
+    
+    def test_return_book(self):
+        book = Factory("book").create(self.book_data)
+        user = Factory("user").create(self.user_data)
+        session = self.db.get_session()
+        engine = self.db.get_engine()
+        handler = Datahandler(session, engine)
+
+        #delete all books
+        session.query(type(book)).delete()
+
+        type(book).metadata.create_all(engine)
+        session.add(book)
+        session.commit()
+
+        type(user).metadata.create_all(engine)
+        session.add(user)
+        session.commit()
+
+        self.assertTrue(book.borrow_status)
+
+        handler.return_book(book.id)   
+
+        book = session.query(type(book)).filter_by(id = book.id).first()
+        self.assertFalse(book.borrow_status)
+        self.assertEqual(book.borrow_by, 0)
 
 class CustomTestResult(unittest.TextTestResult):
     def printErrors(self):
