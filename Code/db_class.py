@@ -5,7 +5,7 @@ from sqlalchemy.orm import declarative_base, Mapped
 
 Base = declarative_base() #Base class from sqlalchemy
 
-class book(Base):
+class Book(Base):
     __tablename__ = 'books'
     
     id = Column(Integer, primary_key = True)
@@ -21,7 +21,7 @@ class book(Base):
         self.release_date = release_date
 
 
-class user(Base):
+class User(Base):
     __tablename__ = 'users'
     
     id = Column(Integer, primary_key = True)
@@ -30,14 +30,14 @@ class user(Base):
     email = Column(String)
     borrowed = Column(JSON)
     
-    def __init__(self, name, address, email):
+    def __init__(self, name, address, email, borrowed = {}):
         self.name = name
         self.address = address
         self.email = email
-        self.borrowed = {}
+        self.borrowed = borrowed
 
 
-class logging:
+class Log:
     __tablename__ = 'logs'
     
     id = Column(Integer, primary_key = True)
