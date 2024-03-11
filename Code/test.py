@@ -15,7 +15,7 @@ class TestData(unittest.TestCase):
         }
 
         self.book_data = {
-            "ISBN": 1234567890,
+            "isbn": "1234567890",
             "title": "John Book",
             "author": "John Doe",
             "release_date": 1619827200,
@@ -56,6 +56,19 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         session.commit()
 
         self.assertTrue(user.id)
+    
+    def test_insert_book(self):
+        factory = Factory("book")
+        book = factory.create(self.book_data)
+        session = self.db.get_session()
+        engine = self.db.get_engine()
+
+        type(book).metadata.create_all(engine)
+
+        session.add(book)
+        session.commit()
+
+        self.assertTrue(book.id)
 
 class CustomTestResult(unittest.TextTestResult):
     def printErrors(self):
