@@ -213,7 +213,7 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         self.assertFalse(book3.isbn in user2.reserved)
         handler.reserve_book(book3.isbn, user2.id)
         user = session.query(db_class.User).filter_by(id = user2.id).first()
-        self.assertTrue(book3.isbn in user.reserved)
+        self.assertTrue(any(reserved.isbn == book3.isbn for reserved in user.reserved))
 
         #test reserve book of failing example
         #user should not be able to reserve a book he has already reserved
