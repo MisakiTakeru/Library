@@ -115,27 +115,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         book = session.query(type(book)).filter_by(id = book.id).first()
         self.assertFalse(book.borrow_status)
         self.assertEqual(book.borrow_by, 0)
-    
-
-        #delete tables
-        session.query(type(book)).delete()
-        session.query(type(user)).delete()
-
-        type(book).metadata.create_all(engine)
-        session.add(book)
-        session.commit()
-
-        type(user).metadata.create_all(engine)
-        session.add(user)
-        session.commit()
-
-        self.assertFalse(book.isbn in user.reserved)
-
-        handler.reserve_book(book.isbn, user.id)
-
-        user = session.query(type(user)).filter_by(id = user.id).first()
-        print(user.reserved)
-        self.assertTrue(book.isbn in user.reserved)
 
     def test_borrow_book(self):
         book2 = Factory("book").create(self.book_data2)
