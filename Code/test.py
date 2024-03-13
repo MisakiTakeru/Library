@@ -2,6 +2,7 @@ import unittest
 from factory import Factory
 from singletonDatabaseConnect import SingletonDatabaseConnect
 from handler import Datahandler
+import db_class
 #python -m unittest test.py
 
 class TestData(unittest.TestCase):
@@ -12,6 +13,12 @@ class TestData(unittest.TestCase):
             "email": "john@doe.com",
             "borrowed": [1], #list of borrowed book id
         }
+        
+        self.user_data2 = {
+            "name" : "The hitchhiker",
+            "address" : "space station Omega 2",
+            "email" : "plsaddme@spac.moon",
+            "borrowed" : []}
 
         self.book_data = {
             "isbn": "1234567890",
@@ -21,6 +28,15 @@ class TestData(unittest.TestCase):
             "borrow_by": 1,
             "borrow_status": True
         }
+        
+        self.book_data2 = {
+            "isbn" : "12358",
+            "title" : "A hitchhikers guide",
+            "author" : "Space Traveler A",
+            "release_date" : 27041995,
+            "borrow_by" : 0,
+            "borrow_status" : False
+        }
 
 class TestSingletonDatabaseConnect(unittest.TestCase):
     def setUp(self) -> None:
@@ -28,7 +44,9 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         self.db = SingletonDatabaseConnect(self.db_url)
         self.data = TestData()
         self.user_data = self.data.user_data
+        self.user_data2 = self.data.user_data2
         self.book_data = self.data.book_data
+        self.book_data2 = self.data.book_data2
 
     def test_singleton(self):
         db = SingletonDatabaseConnect(self.db_url)
@@ -96,6 +114,42 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         book = session.query(type(book)).filter_by(id = book.id).first()
         self.assertFalse(book.borrow_status)
         self.assertEqual(book.borrow_by, 0)
+    
+    def test_borrow_book(self):
+        book2 = Factory("book").create(self.book_data2)
+        user2 = Factory("user").create(self.user_data2)
+        borrow = "A hitchhikers guide"
+        uid = 1
+        session = self.db.get_session()
+        engine = self.db.get_engine()
+        handler = Datahandler(session, engine)
+
+        type(book2).metadata.create_all(engine)
+        session.add(book2)
+        session.commit()
+
+        book2 = Factory("book").create(self.book_data2)
+        type(book2).metadata.create_all(engine)
+        session.add(book2)
+        session.commit()
+
+        type(user2).metadata.create_all(engine)
+        session.add(user2)
+        session.commit()
+ 
+        handler.borrow(borrow, uid)
+        
+        bookt = session.query(db_class.Book).filter_by(title = borrow).first()
+        self.assertTrue(bookt.borrow_status)
+        
+        handler.borrow(borrow, uid)
+        
+        usert = session.query(db_class.User).first()
+        self.assertEqual(usert.borrowed, [1,2])
+        
+        fail = handler.borrow(borrow, uid)
+        self.assertEqual(fail, f'all versions of the book {borrow} has been borrowed.')
+        
 
 class CustomTestResult(unittest.TextTestResult):
     def printErrors(self):

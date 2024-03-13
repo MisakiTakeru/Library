@@ -44,16 +44,16 @@ class Datahandler:
     
     def borrow(self, name, uid):
         book = self.session.query(db_class.Book).filter_by(title = name).\
-            filter_by(borrowed = False).first()
+            filter_by(borrow_status = False).first()
         if book == None:
-            print(f'all versions of the book {name} has been borrowed.')
-            return
+#            print(f'all versions of the book {name} has been borrowed.')
+            return f'all versions of the book {name} has been borrowed.'
         else:
 # Executes an update command that finds the book with the id found, and sets
 # it's borrowed status to true
             self.session.execute(
                 update(db_class.Book),
-                [ {'id' : book.id, 'borrowed' : True}])
+                [ {'id' : book.id, 'borrow_status' : True}])
             
             
             bb = self.session.query(db_class.User).filter_by(id = uid).first().borrowed
