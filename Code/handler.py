@@ -21,7 +21,7 @@ class Datahandler:
 
         #get list of books with isbn
         books = self.session.query(db_class.Book).filter_by(isbn = book_isbn).all()
-        if books is None:
+        if not books:
             raise ValueError(f"No book found with isbn {book_isbn}")
         
         #check if book is already reserved by user
@@ -30,15 +30,15 @@ class Datahandler:
         
         #user should borrow instead of reserve if book is available
         for book in books:
-            if book.borrow_status == False:
+            if not book.borrowed:
                 raise ValueError(f"Book with isbn {book_isbn} is available for borrowing")
         
         #user should not be able to reserve a book he has already borrowed
         for book in books:
-            if book.id in user.borrowed:
+            if any(borrowed.book_id == book.id for borrowed in user.borrowed):
                 raise ValueError(f"User with id {user_id} has already borrowed book with id {book.id}")
 
-        user.reserved.append(db_class.Reserved(book_isbn, int(time.time())))
+        user.reserved.append(db_class.Reserved(user_id, book.id, book_isbn, int(time.time())))
 
         try:
             print(f"User {user.name} reserved book with isbn {book_isbn} successfully")
@@ -53,20 +53,20 @@ class Datahandler:
         book = self.session.query(db_class.Book).filter_by(id = book_id).first()
         if book is None:
             raise ValueError(f"No book found with id {book_id}")
-        
-        if book.borrow_status == False:
+
+        borrowed_book = self.session.query(db_class.Borrowed).filter_by(book_id = book_id).first()
+        if borrowed_book is None:
             raise ValueError(f"Book with id {book_id} is not borrowed")
-        
-        user = self.session.query(db_class.User).filter_by(id = book.borrow_by).first()
+
+        user = self.session.query(db_class.User).filter_by(id = borrowed_book.user_id).first()
         if user is None:
-            raise ValueError(f"No user found with id {book.borrow_by}")
-        
-        if book_id not in user.borrowed:
-            raise ValueError(f"Book with id {book_id} is not in user borrowed list")
-        
-        user.borrowed.remove(book_id)
-        book.borrow_status = False
-        book.borrow_by = 0
+            raise ValueError(f"No user found with id {borrowed_book.user_id}")
+
+        # Remove the borrowed_book from the borrowed list of the user and the book
+        user.borrowed.remove(borrowed_book)
+        book.borrowed.remove(borrowed_book)
+
+        self.session.delete(borrowed_book)
 
         try:
             print(f"User {user.name} returned book with id {book_id} and title {book.title} successfully")
@@ -75,33 +75,26 @@ class Datahandler:
         except Exception as e:
             print(f"An error occurred: {e}")
             self.session.rollback()
-            return False  
-        
-    
+            return False
     
     @logger
     def borrow(self, name, uid):
         book = self.session.query(db_class.Book).filter_by(title = name).\
-            filter_by(borrow_status = False).first()
+            filter(not db_class.Book.borrowed).first()
         if book == None:
-#            print(f'all versions of the book {name} has been borrowed.')
             return f'all versions of the book {name} has been borrowed.'
         else:
-# Executes an update command that finds the book with the id found, and sets
-# it's borrowed status to true
+            borrowed = db_class.Borrowed(user_id=uid, book_id=book.id)
+            user = self.session.query(db_class.User).filter_by(id = uid).first()
+            user.borrowed.append(borrowed)
+            book.borrowed.append(borrowed)
+
             self.session.execute(
-                update(db_class.Book),
-                [ {'id' : book.id, 'borrow_status' : True}])
+                update(db_class.Book).where(db_class.Book.id == book.id).values(borrowed=book.borrowed))
+                        
             
-            
-            bb = self.session.query(db_class.User).filter_by(id = uid).first().borrowed
             self.session.execute(
-                update(db_class.User),
-                [ {'id' : uid, 'borrowed' : bb + [book.id]}])
+                update(db_class.User).where(db_class.User.id == uid).values(borrowed=user.borrowed))
+
             self.session.commit()
             return
-            
-
-    def reserve():
-        pass    
-        
