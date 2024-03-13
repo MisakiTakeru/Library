@@ -29,10 +29,10 @@ def logger(func):
         value = func(*args, **kwargs)
         print(f"{func.__name__}() returned {repr(value)}")
         
-        if func.__name__ == 'borrow':
-            log_data = {
-                'kwargs' : args_repr[1:],
-                'clas'}
+#        if func.__name__ == 'borrow':
+#            log_data = {
+#                'kwargs' : args_repr[1:],
+#                'clas'}
         
         return value
     return wrapper_log
