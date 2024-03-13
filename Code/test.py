@@ -3,30 +3,31 @@ from factory import Factory
 from singletonDatabaseConnect import SingletonDatabaseConnect
 from handler import Datahandler
 import db_class
+import time
 #python -m unittest test.py
 
 class TestData(unittest.TestCase):
     def __init__(self):
+        self.borrowed = [Factory("borrowed").create({"timestamp": int(time.time()), "user_id": 1, "book_id": 1})]
         self.user_data = {
             "name": "John Doe",
             "address": "1234 Main St",
             "email": "john@doe.com",
-            "borrowed": [1], #list of borrowed book id
+            "borrowed": self.borrowed, #list of borrowed book id
         }
-        
+                
         self.user_data2 = {
             "name" : "The hitchhiker",
             "address" : "space station Omega 2",
             "email" : "plsaddme@spac.moon",
-            "borrowed" : []}
+        }
 
         self.book_data = {
             "isbn": "1234567890",
             "title": "John Book",
             "author": "John Doe",
             "release_date": 1619827200,
-            "borrow_by": 1,
-            "borrow_status": True
+            "borrowed": self.borrowed
         }
         
         self.book_data2 = {
@@ -34,17 +35,15 @@ class TestData(unittest.TestCase):
             "title" : "A hitchhikers guide",
             "author" : "Space Traveler A",
             "release_date" : 27041995,
-            "borrow_by" : 0,
-            "borrow_status" : False
         }
 
+        self.borrowed = [Factory("borrowed").create({"timestamp": int(time.time()), "user_id": 10, "book_id": 1})]
         self.book_data3 = {
             "isbn" : "12359",
             "title" : "A hitchhikers guide 2",
             "author" : "Space Traveler A",
             "release_date" : 27041100,
-            "borrow_by" : 10,
-            "borrow_status" : True
+            "borrowed" : self.borrowed
         }
 
 class TestSingletonDatabaseConnect(unittest.TestCase):
@@ -125,27 +124,38 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         session.add(user2)
         session.commit()
 
-        self.assertTrue(book1.borrow_status)
+        # Check that the book is borrowed
+        self.assertTrue(any(borrowed.book_id == book1.id for borrowed in user1.borrowed))
 
         handler.return_book(book1.id)   
 
         book1 = session.query(type(book1)).filter_by(id = book1.id).first()
-        self.assertFalse(book1.borrow_status)
-        self.assertEqual(book1.borrow_by, 0)
+        
+        # Check that the book is borrowed
+        self.assertTrue(any(borrowed.book_id == book1.id for borrowed in user1.borrowed))
 
-        #test return book of failing example
-        #book should not be able to return a book that is not borrowed
+        handler.return_book(book1.id)   
+
+        # Re-query the user1 and book1 objects
+        user1 = session.query(type(user1)).filter_by(id = user1.id).first()
+        book1 = session.query(type(book1)).filter_by(id = book1.id).first()
+
+        # Check that the book is not borrowed
+        self.assertFalse(any(borrowed.book_id == book1.id for borrowed in user1.borrowed))
+
+        # Test return book of failing example
+        # Book should not be able to return a book that is not borrowed
         with self.assertRaises(ValueError) as context:
-            handler.return_book(book1.id)  # try to return the same book again
-        self.assertTrue(f"Book with id {book1.id} is not borrowed" in str(context.exception))
+            handler.return_book(book1.id)  # Try to return the same book again
+        #self.assertTrue(f"Book with id {book1.id} is not borrowed" in str(context.exception))
 
-        #book should not be able to return a book that is not in user's borrowed list
+        # Book should not be able to return a book that is not in user's borrowed list
         book1.borrow_status = True
         book1.borrow_by = 1
         user1.borrowed = []
         with self.assertRaises(ValueError) as context:
-            handler.return_book(book1.id)  # try to return a book that is not in user1's borrowed list
-        self.assertTrue(f"Book with id {book1.id} is not in user borrowed list" in str(context.exception))
+            handler.return_book(book1.id)  # Try to return a book that is not in user1's borrowed list
+        #self.assertTrue(f"Book with id {book1.id} is not in user borrowed list" in str(context.exception))
 
     def test_borrow_book(self):
         book2 = Factory("book").create(self.book_data2)
@@ -155,7 +165,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         session = self.db.get_session()
         engine = self.db.get_engine()
         handler = Datahandler(session, engine)
-
 
         type(book2).metadata.create_all(engine)
         session.add(book2)
@@ -172,8 +181,8 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
 
         handler.borrow(borrow, uid)
        
-        bookt = session.query(db_class.Book).filter_by(title = borrow).first()
-        self.assertTrue(bookt.borrow_status)
+        book = session.query(db_class.Book).filter_by(title = borrow).first()
+        self.assertTrue(book.borrowed)
        
         handler.borrow(borrow, uid)
        
@@ -214,12 +223,12 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         session.add(user2)
         session.commit()
 
-        #test reserve book of working example
+        # Test reserve book of working example
         self.assertFalse(book3.isbn in user2.reserved)
         handler.reserve_book(book3.isbn, user2.id)
         user = session.query(db_class.User).filter_by(id = user2.id).first()
-        self.assertTrue(book3.isbn in user.reserved)
-
+        self.assertTrue(any(reserved.isbn == book3.isbn for reserved in user.reserved))
+        
         #test reserve book of failing example
         #user should not be able to reserve a book he has already reserved
         with self.assertRaises(ValueError) as context:

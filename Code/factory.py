@@ -1,4 +1,4 @@
-from db_class import User, Book, Log
+from db_class import User, Book, Log, BookStatus
 
 class Factory:
     def __init__(self, item_type=None):
@@ -7,6 +7,7 @@ class Factory:
             "user" : User,
             "book" : Book,
             "log"  : Log,
+            "book_status": BookStatus, 
         }
     
     def create(self, data_dict=None, **kwargs):
