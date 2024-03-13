@@ -38,6 +38,15 @@ class TestData(unittest.TestCase):
             "borrow_status" : False
         }
 
+        self.book_data3 = {
+            "isbn" : "12358",
+            "title" : "A hitchhikers guide",
+            "author" : "Space Traveler A",
+            "release_date" : 27041995,
+            "borrow_by" : 10,
+            "borrow_status" : True
+        }
+
 class TestSingletonDatabaseConnect(unittest.TestCase):
     def setUp(self) -> None:
         self.db_url = "sqlite:///:memory:"
@@ -47,6 +56,7 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         self.user_data2 = self.data.user_data2
         self.book_data = self.data.book_data
         self.book_data2 = self.data.book_data2
+        self.book_data3 = self.data.book_data3
 
     def test_singleton(self):
         db = SingletonDatabaseConnect(self.db_url)
@@ -153,31 +163,34 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         self.assertEqual(fail, f'all versions of the book {borrow} has been borrowed.')
 
     def test_reserve_book(self):
-        book = Factory("book").create(self.book_data)
-        user = Factory("user").create(self.user_data)
+        book3 = Factory("book").create(self.book_data3)
+        book2 = Factory("book").create(self.book_data2)
+        book1 = Factory("book").create(self.book_data)
+        user1 = Factory("user").create(self.user_data)
+        user2 = Factory("user").create(self.user_data2)
         session = self.db.get_session()
         engine = self.db.get_engine()
         handler = Datahandler(session, engine)
 
         #delete tables
-        session.query(type(book)).delete()
-        session.query(type(user)).delete()
+        session.query(type(book3)).delete()
+        session.query(type(user2)).delete()
 
-        type(book).metadata.create_all(engine)
-        session.add(book)
+        type(book3).metadata.create_all(engine)
+        session.add(book3)
         session.commit()
 
-        type(user).metadata.create_all(engine)
-        session.add(user)
+        type(user2).metadata.create_all(engine)
+        session.add(user2)
         session.commit()
 
-        self.assertFalse(book.isbn in user.reserved)
+        #test reserve book of working example
+        self.assertFalse(book3.isbn in user2.reserved)
+        handler.reserve_book(book3.isbn, user2.id)
+        user = session.query(db_class.User).filter_by(id = user2.id).first()
+        self.assertTrue(book3.isbn in user.reserved)
 
-        handler.reserve_book(book.isbn, user.id)
 
-        user = session.query(db_class.User).filter_by(id = user.id).first()
-        print(user.reserved)
-        self.assertTrue(book.isbn in user.reserved)
         
 class CustomTestResult(unittest.TextTestResult):
     def printErrors(self):
