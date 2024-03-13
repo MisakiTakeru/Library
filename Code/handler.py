@@ -3,6 +3,7 @@ from singletonDatabaseConnect import SingletonDatabaseConnect as SDC
 import db_class
 from factory import Factory
 from sqlalchemy import update
+from sqlalchemy.orm.attributes import flag_modified
 from datetime import datetime
 
 
@@ -17,7 +18,7 @@ class Datahandler:
         if user is None:
             raise ValueError(f"No user found with id {user_id}")
 
-        #get listof books with isbn
+        #get list of books with isbn
         books = self.session.query(db_class.Book).filter_by(isbn = book_isbn).all()
         if books is None:
             raise ValueError(f"No book found with isbn {book_isbn}")
@@ -31,14 +32,17 @@ class Datahandler:
             if book.borrow_status == False:
                 raise ValueError(f"Book with isbn {book_isbn} is available for borrowing")
         
-        user.reserved[book_isbn] = datetime.now()
+        #user should not be able to reserve a book he has already borrowed
+        for book in books:
+            if book.id in user.borrowed:
+                raise ValueError(f"User with id {user_id} has already borrowed book with id {book.id}")
+
+        user.reserved[book_isbn] = datetime.now().isoformat()
+        flag_modified(user, 'reserved')
 
         try:
             print(f"User {user.name} reserved book with isbn {book_isbn} successfully")
-            # Print user in a loop with all components
-            for component in user.__dict__.items():
-                print(component)
-#            self.session.commit()
+            self.session.commit()
             return True
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -61,8 +65,8 @@ class Datahandler:
             raise ValueError(f"Book with id {book_id} is not in user borrowed list")
 
         user.borrowed.remove(book_id)
-        book.borrow_status = False 
-        book.borrow_by = 0         
+        book.borrow_status = False
+        book.borrow_by = 0
 
         try:
             print(f"User {user.name} returned book with id {book_id} and title {book.title} successfully")
