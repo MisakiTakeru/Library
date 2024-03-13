@@ -39,10 +39,10 @@ class TestData(unittest.TestCase):
         }
 
         self.book_data3 = {
-            "isbn" : "12358",
-            "title" : "A hitchhikers guide",
+            "isbn" : "12359",
+            "title" : "A hitchhikers guide 2",
             "author" : "Space Traveler A",
-            "release_date" : 27041995,
+            "release_date" : 27041100,
             "borrow_by" : 10,
             "borrow_status" : True
         }
@@ -100,31 +100,52 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         self.assertTrue(book.id)
     
     def test_return_book(self):
-        book = Factory("book").create(self.book_data)
-        user = Factory("user").create(self.user_data)
+        book3 = Factory("book").create(self.book_data3)
+        book2 = Factory("book").create(self.book_data2)
+        book1 = Factory("book").create(self.book_data)
+        user1 = Factory("user").create(self.user_data)
+        user2 = Factory("user").create(self.user_data2)
         session = self.db.get_session()
         engine = self.db.get_engine()
         handler = Datahandler(session, engine)
 
         #delete tables
-        session.query(type(book)).delete()
-        session.query(type(user)).delete()
+        session.query(type(book3)).delete()
+        session.query(type(user2)).delete()
 
-        type(book).metadata.create_all(engine)
-        session.add(book)
+        type(book3).metadata.create_all(engine)
+        session.add(book1)
+        session.add(book2)
+        session.add(book3)
+        
         session.commit()
 
-        type(user).metadata.create_all(engine)
-        session.add(user)
+        type(user2).metadata.create_all(engine)
+        session.add(user1)
+        session.add(user2)
         session.commit()
 
-        self.assertTrue(book.borrow_status)
+        self.assertTrue(book1.borrow_status)
 
-        handler.return_book(book.id)   
+        handler.return_book(book1.id)   
 
-        book = session.query(type(book)).filter_by(id = book.id).first()
-        self.assertFalse(book.borrow_status)
-        self.assertEqual(book.borrow_by, 0)
+        book1 = session.query(type(book1)).filter_by(id = book1.id).first()
+        self.assertFalse(book1.borrow_status)
+        self.assertEqual(book1.borrow_by, 0)
+
+        #test return book of failing example
+        #book should not be able to return a book that is not borrowed
+        with self.assertRaises(ValueError) as context:
+            handler.return_book(book1.id)  # try to return the same book again
+        self.assertTrue(f"Book with id {book1.id} is not borrowed" in str(context.exception))
+
+        #book should not be able to return a book that is not in user's borrowed list
+        book1.borrow_status = True
+        book1.borrow_by = 1
+        user1.borrowed = []
+        with self.assertRaises(ValueError) as context:
+            handler.return_book(book1.id)  # try to return a book that is not in user1's borrowed list
+        self.assertTrue(f"Book with id {book1.id} is not in user borrowed list" in str(context.exception))
 
     def test_borrow_book(self):
         book2 = Factory("book").create(self.book_data2)
@@ -177,10 +198,14 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         session.query(type(user2)).delete()
 
         type(book3).metadata.create_all(engine)
+        session.add(book1)
+        session.add(book2)
         session.add(book3)
+        
         session.commit()
 
         type(user2).metadata.create_all(engine)
+        session.add(user1)
         session.add(user2)
         session.commit()
 
@@ -190,8 +215,22 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         user = session.query(db_class.User).filter_by(id = user2.id).first()
         self.assertTrue(book3.isbn in user.reserved)
 
+        #test reserve book of failing example
+        #user should not be able to reserve a book he has already reserved
+        with self.assertRaises(ValueError) as context:
+            handler.reserve_book(book3.isbn, user2.id)  
+        self.assertTrue(f"Book with isbn {book3.isbn} is already reserved by user with id {user2.id}" in str(context.exception))
 
-        
+        #user should not be able to reserve a book thats alwayable for borrowing
+        with self.assertRaises(ValueError) as context:
+            handler.reserve_book(book2.isbn, user1.id)
+        self.assertTrue(f"Book with isbn {book2.isbn} is available for borrowing" in str(context.exception))
+
+        #user should not be able to reserve a book he has already borrowed
+        with self.assertRaises(ValueError) as context:
+            handler.reserve_book(book1.isbn, user1.id)
+        self.assertTrue(f"User with id {user1.id} has already borrowed book with id {book1.id}" in str(context.exception))
+
 class CustomTestResult(unittest.TextTestResult):
     def printErrors(self):
         self.stream.writeln("Passed: {}".format(self.testsRun - len(self.failures) - len(self.errors)))
