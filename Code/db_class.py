@@ -48,13 +48,13 @@ class Log:
     
     id = Column(Integer, primary_key = True)
     kwargs = Column(String)
-    clas = Mapped['clas']
+    func = Column(String)
     bid = Column(Integer)
     uid = Column(Integer)
     
-    def __init__(self, kwargs, clas, bid, uid):
+    def __init__(self, kwargs, func, bid, uid):
         self.kwargs = kwargs
-        self.clas = clas
+        self.func = func
         self.bid = bid
         self.uid = uid
 

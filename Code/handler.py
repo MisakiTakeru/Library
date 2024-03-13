@@ -5,14 +5,14 @@ from factory import Factory
 from sqlalchemy import update
 from sqlalchemy.orm.attributes import flag_modified
 from datetime import datetime
-
+from decorators import logger
 
 class Datahandler:
 
     def __init__(self, session, engine):
         self.session = session 
         self.engine = engine
-
+    @logger
     def reserve_book(self, book_isbn, user_id):
         user = self.session.query(db_class.User).filter_by(id = user_id).first()
         if user is None:
@@ -48,7 +48,7 @@ class Datahandler:
             print(f"An error occurred: {e}")
             self.session.rollback()
             return False
-
+    @logger
     def return_book(self, book_id):
         book = self.session.query(db_class.Book).filter_by(id = book_id).first()
         if book is None:
@@ -79,7 +79,7 @@ class Datahandler:
         
     
     
-    
+    @logger
     def borrow(self, name, uid):
         book = self.session.query(db_class.Book).filter_by(title = name).\
             filter_by(borrow_status = False).first()
