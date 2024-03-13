@@ -42,7 +42,7 @@ class Datahandler:
     
     
     
-    def borrow(name, uid):
+    def borrow(self, name, uid):
         book = self.session.query(db_class.Book).filter_by(title = name).\
             filter_by(borrowed = False).first()
         if book == None:
