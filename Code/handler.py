@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from singletonDatabaseConnect import SingletonDatabaseConnect as SDC
 import db_class
+from factory import Factory
 from sqlalchemy import update
 from decorators import logger
 import time
@@ -20,7 +21,7 @@ class Datahandler:
             raise ValueError("Invalid book_id or user_id")
 
         # Fetch the latest book status
-        book_status = self.session.query(db_class.BookStatus).filter_by(book_id = book_id, user_id = user_id).order_by(db_class.BookStatus.timestamp.desc()).first()
+        book_status = self.session.query(db_class.BookStatus).filter_by(book_id = book_id).order_by(db_class.BookStatus.timestamp.desc()).first()
 
         if book_status is None:
             # If no book status exists, create a new one
@@ -33,6 +34,12 @@ class Datahandler:
             book_status.status_reserved = status_reserved
             book_status.status_available = status_available
 
+            # Update user_id based on status
+            if status_borrowed or status_reserved:
+                book_status.user_id = user_id
+            elif status_available:
+                book_status.user_id = 0
+
         try:
             self.session.commit()
             return True
@@ -40,7 +47,26 @@ class Datahandler:
             print(f"An error occurred: {e}")
             self.session.rollback()
             return False
-        
+
+    def add_user(self, name, address, email):
+        user = Factory("user").create({"name": name, "address": address, "email": email})
+        self.session.add(user)
+        self.session.commit()
+        return user.id
+    
+    def add_book(self, isbn, title, author, release_date):
+        book = Factory("book").create({"isbn": isbn, "title": title, "author": author, "release_date": release_date})
+        self.session.add(book)
+        self.session.commit()
+        self.__add_book_status(book.id)
+        return book.id
+
+    def __add_book_status(self, book_id, user_id = 0):
+        book_status = Factory("book_status").create({"timestamp": time.time(), "book_id": book_id, "user_id": user_id, "status_borrowed": False, "status_reserved": False, "status_available": True})
+        self.session.add(book_status)
+        self.session.commit()
+        return book_status.id
+
     @logger
     def reserve_book(self, book_isbn, user_id):
         book = self.session.query(db_class.Book).filter_by(isbn = book_isbn).first()
@@ -88,9 +114,9 @@ class Datahandler:
         if not book_statuses:
             raise ValueError(f"No book status found with book_id {book_id}")
         
-        # check if book is already available
+        # check if book is already returned
         if all(book_status.status_available for book_status in book_statuses):
-            raise ValueError(f"Book with id {book_id} is already available")
+            raise ValueError(f"Book with id {book_id} is already returned by user with id {user_id}")
         
         return self.update_book_status(book.id, user.id, status_borrowed=False, status_reserved=False, status_available=True)
                 
@@ -104,19 +130,19 @@ class Datahandler:
 
         if not books:
             raise ValueError(f"No book found with isbn {book_isbn}")
-
-        # Check if user has already borrowed a copy of this book
-        if any(book_status.book_id == book.id and book_status.status_borrowed for book in books for book_status in user.book_statuses):
-            raise ValueError(f"User with id {user_id} has already borrowed a copy of book with isbn {book_isbn}")
+        
+        # Check if user has already borrowed a book with the same isbn
+        if any(book_status.user_id == user.id and book_status.status_borrowed for book in books for book_status in book.book_statuses):
+            raise ValueError(f"User with id {user_id} has already borrowed a book with isbn {book_isbn}")
+        
+        # Check if all copies are already borrowed
+        if all(any(book_status.status_borrowed for book_status in book.book_statuses) for book in books):
+            raise ValueError(f"All copies of book with isbn {book_isbn} are already borrowed")
 
         # Find a book that is not borrowed
         for book in books:
-            if not any(book_status.book_id == book.id and book_status.status_borrowed for book_status in user.book_statuses):
+            if not any(book_status.user_id == user.id and book_status.status_borrowed for book_status in book.book_statuses):
                 return self.update_book_status(book.id, user.id, status_borrowed=True, status_reserved=False, status_available=False)
-
-        # If all copies are borrowed, raise an error
-        raise ValueError(f"All copies of book with isbn {book_isbn} are already borrowed")
-
             
     @logger
     def borrow(self, name, uid):
