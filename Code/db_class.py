@@ -59,7 +59,7 @@ class User(Base):
         self.email = email
         self.book_statuses = book_statuses if book_statuses is not None else []
 
-class Log:
+class Log(Base):
     __tablename__ = 'logs'
     
     id = Column(Integer, primary_key = True)
@@ -67,9 +67,12 @@ class Log:
     func = Column(String)
     bid = Column(Integer)
     uid = Column(Integer)
+    result = Column(Boolean)
     
-    def __init__(self, kwargs, func, bid, uid):
+    def __init__(self, kwargs, func, bid, uid, result):
         self.kwargs = kwargs
         self.func = func
         self.bid = bid
         self.uid = uid
+        self.result = result
+
