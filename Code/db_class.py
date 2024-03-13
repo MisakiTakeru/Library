@@ -33,12 +33,14 @@ class User(Base):
     address = Column(String)
     email = Column(String)
     borrowed = Column(JSON)
+    reserved = Column(JSON)
     
-    def __init__(self, name, address, email, borrowed = {}):
+    def __init__(self, name, address, email, borrowed = {}, reserved = {}):
         self.name = name
         self.address = address
         self.email = email
-        self.borrowed = borrowed
+        self.borrowed = borrowed #list of book id
+        self.reserved = reserved #list of book isbns and timestamp (so we can sort by date and notify first user by time)
 
 
 class Log:

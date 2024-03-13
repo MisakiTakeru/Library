@@ -96,8 +96,9 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         engine = self.db.get_engine()
         handler = Datahandler(session, engine)
 
-        #delete all books
+        #delete tables
         session.query(type(book)).delete()
+        session.query(type(user)).delete()
 
         type(book).metadata.create_all(engine)
         session.add(book)
@@ -115,6 +116,27 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         self.assertFalse(book.borrow_status)
         self.assertEqual(book.borrow_by, 0)
     
+
+        #delete tables
+        session.query(type(book)).delete()
+        session.query(type(user)).delete()
+
+        type(book).metadata.create_all(engine)
+        session.add(book)
+        session.commit()
+
+        type(user).metadata.create_all(engine)
+        session.add(user)
+        session.commit()
+
+        self.assertFalse(book.isbn in user.reserved)
+
+        handler.reserve_book(book.isbn, user.id)
+
+        user = session.query(type(user)).filter_by(id = user.id).first()
+        print(user.reserved)
+        self.assertTrue(book.isbn in user.reserved)
+
     def test_borrow_book(self):
         book2 = Factory("book").create(self.book_data2)
         user2 = Factory("user").create(self.user_data2)
@@ -123,6 +145,7 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         session = self.db.get_session()
         engine = self.db.get_engine()
         handler = Datahandler(session, engine)
+
 
         type(book2).metadata.create_all(engine)
         session.add(book2)
@@ -136,21 +159,47 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         type(user2).metadata.create_all(engine)
         session.add(user2)
         session.commit()
- 
+
         handler.borrow(borrow, uid)
-        
+       
         bookt = session.query(db_class.Book).filter_by(title = borrow).first()
         self.assertTrue(bookt.borrow_status)
-        
+       
         handler.borrow(borrow, uid)
-        
+       
         usert = session.query(db_class.User).first()
         self.assertEqual(usert.borrowed, [1,2])
-        
+       
         fail = handler.borrow(borrow, uid)
         self.assertEqual(fail, f'all versions of the book {borrow} has been borrowed.')
-        
 
+    def test_reserve_book(self):
+        book = Factory("book").create(self.book_data)
+        user = Factory("user").create(self.user_data)
+        session = self.db.get_session()
+        engine = self.db.get_engine()
+        handler = Datahandler(session, engine)
+
+        #delete tables
+        session.query(type(book)).delete()
+        session.query(type(user)).delete()
+
+        type(book).metadata.create_all(engine)
+        session.add(book)
+        session.commit()
+
+        type(user).metadata.create_all(engine)
+        session.add(user)
+        session.commit()
+
+        self.assertFalse(book.isbn in user.reserved)
+
+        handler.reserve_book(book.isbn, user.id)
+
+        user = session.query(type(user)).filter_by(id = user.id).first()
+        print(user.reserved)
+        self.assertTrue(book.isbn in user.reserved)
+        
 class CustomTestResult(unittest.TextTestResult):
     def printErrors(self):
         self.stream.writeln("Passed: {}".format(self.testsRun - len(self.failures) - len(self.errors)))
