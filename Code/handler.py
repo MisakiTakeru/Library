@@ -6,6 +6,7 @@ from sqlalchemy import update
 from sqlalchemy.orm.attributes import flag_modified
 from datetime import datetime
 from decorators import logger
+import time
 
 class Datahandler:
 
@@ -24,7 +25,7 @@ class Datahandler:
             raise ValueError(f"No book found with isbn {book_isbn}")
         
         #check if book is already reserved by user
-        if book_isbn in user.reserved:
+        if any(reserved.isbn == book_isbn for reserved in user.reserved):
             raise ValueError(f"Book with isbn {book_isbn} is already reserved by user with id {user_id}")
         
         #user should borrow instead of reserve if book is available
@@ -37,8 +38,7 @@ class Datahandler:
             if book.id in user.borrowed:
                 raise ValueError(f"User with id {user_id} has already borrowed book with id {book.id}")
 
-        user.reserved[book_isbn] = datetime.now().isoformat()
-        flag_modified(user, 'reserved')
+        user.reserved.append(db_class.Reserved(book_isbn, int(time.time())))
 
         try:
             print(f"User {user.name} reserved book with isbn {book_isbn} successfully")
