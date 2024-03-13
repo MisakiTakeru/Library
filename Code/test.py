@@ -182,6 +182,11 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
        
         fail = handler.borrow(borrow, uid)
         self.assertEqual(fail, f'all versions of the book {borrow} has been borrowed.')
+        
+        log = session.query(db_class.Log)
+        for l in log:
+            print('test')
+            print(f' {l.func}{l.kwargs} user {l.uid} wanted to {l.func} book id {l.bid} with result {l.result}')
 
     def test_reserve_book(self):
         book3 = Factory("book").create(self.book_data3)
