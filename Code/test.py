@@ -175,7 +175,7 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
 
         handler.reserve_book(book.isbn, user.id)
 
-        user = session.query(type(user)).filter_by(id = user.id).first()
+        user = session.query(db_class.User).filter_by(id = user.id).first()
         print(user.reserved)
         self.assertTrue(book.isbn in user.reserved)
         

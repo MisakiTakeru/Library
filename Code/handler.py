@@ -31,19 +31,19 @@ class Datahandler:
             if book.borrow_status == False:
                 raise ValueError(f"Book with isbn {book_isbn} is available for borrowing")
         
-            user.reserved[book_isbn] = datetime.now()
+        user.reserved[book_isbn] = datetime.now()
 
         try:
             print(f"User {user.name} reserved book with isbn {book_isbn} successfully")
             # Print user in a loop with all components
             for component in user.__dict__.items():
                 print(component)
-            self.session.commit()
-            return True  
+#            self.session.commit()
+            return True
         except Exception as e:
             print(f"An error occurred: {e}")
             self.session.rollback()
-            return False 
+            return False
 
     def return_book(self, book_id):
         book = self.session.query(db_class.Book).filter_by(id = book_id).first()
