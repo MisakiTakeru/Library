@@ -78,8 +78,9 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         engine = self.db.get_engine()
         handler = Datahandler(session, engine)
 
-        #delete all books
+        #delete tables
         session.query(type(book)).delete()
+        session.query(type(user)).delete()
 
         type(book).metadata.create_all(engine)
         session.add(book)
@@ -96,6 +97,33 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         book = session.query(type(book)).filter_by(id = book.id).first()
         self.assertFalse(book.borrow_status)
         self.assertEqual(book.borrow_by, 0)
+    
+    def test_reserve_book(self):
+        book = Factory("book").create(self.book_data)
+        user = Factory("user").create(self.user_data)
+        session = self.db.get_session()
+        engine = self.db.get_engine()
+        handler = Datahandler(session, engine)
+
+        #delete tables
+        session.query(type(book)).delete()
+        session.query(type(user)).delete()
+
+        type(book).metadata.create_all(engine)
+        session.add(book)
+        session.commit()
+
+        type(user).metadata.create_all(engine)
+        session.add(user)
+        session.commit()
+
+        self.assertFalse(book.isbn in user.reserved)
+
+        handler.reserve_book(book.isbn, user.id)
+
+        user = session.query(type(user)).filter_by(id = user.id).first()
+        print(user.reserved)
+        self.assertTrue(book.isbn in user.reserved)
 
 class CustomTestResult(unittest.TextTestResult):
     def printErrors(self):
