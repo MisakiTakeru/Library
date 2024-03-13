@@ -53,17 +53,17 @@ class Datahandler:
         book = self.session.query(db_class.Book).filter_by(id = book_id).first()
         if book is None:
             raise ValueError(f"No book found with id {book_id}")
-
-        user = self.session.query(db_class.User).filter_by(id = book.borrow_by).first()
-        if user is None:
-            raise ValueError(f"No user found with id {book.borrow_by}")
-
+        
         if book.borrow_status == False:
             raise ValueError(f"Book with id {book_id} is not borrowed")
         
+        user = self.session.query(db_class.User).filter_by(id = book.borrow_by).first()
+        if user is None:
+            raise ValueError(f"No user found with id {book.borrow_by}")
+        
         if book_id not in user.borrowed:
             raise ValueError(f"Book with id {book_id} is not in user borrowed list")
-
+        
         user.borrowed.remove(book_id)
         book.borrow_status = False
         book.borrow_by = 0
