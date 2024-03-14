@@ -2,29 +2,29 @@
 
 ## Code used
 This is the code used for the project. See [Diagrams](#diagrams) for structure
-* [Database Tables / Classes](code/db_class.py)
+* [Database Tables / Classes](Code/db_class.py)
     * `db_class.py` contains all tables the database will of.
     This is done using a base class from `sqlalchemy` to keep track of SQL related variables.
 
-* [Handler for database calls](code/handler.py)
+* [Handler for database calls](Code/handler.py)
     * `handler.py` handles all interaction with the database.
     with `add_` `borrow_book` `reserve_book` `return_book` and `lookup`
     the functions will handle errors and update the `BookStatus` as needed
 
-* [Factory](code/factory.py)
+* [Factory](Code/factory.py)
     * `factory.py` is a very simple class that just creates objects from `db_class`
     and parses the correct parameters. This is not needed in our case as simpler alternatices exist.
     but it was implemented in case we needed it.
 
-* [Singleton Database Connection using SQLAlchemy](code/singletonDatabaseConnect.py)
+* [Singleton Database Connection using SQLAlchemy](Code/singletonDatabaseConnect.py)
     * `singletonDatabaseConnect.py` is a simple database connection that starts a SQLAlchemy `engine` and `session`
     It's also a singleton that will return its own instance if created multiple times. To remain as single instance.
 
-* [Tests](code/newTest.py)
+* [Tests](Code/newTest.py)
     * `newTest.py` tests all the handler functions to make sure errors are handled correctly.
     And also checks if data is being added correctly to the database.
 
-* [Menu](code/menu.py)
+* [Menu](Code/menu.py)
     * `menu.py` is a simple terminal menu program. It allows a user to experience all the functionality of our project.
     It also imports faker to generate fake user or book data.
 
