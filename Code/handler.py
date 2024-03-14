@@ -5,6 +5,7 @@ from factory import Factory
 from sqlalchemy import update
 from decorators import logger
 import time
+from pprint import pprint
 
 class Datahandler:
 
@@ -130,3 +131,52 @@ class Datahandler:
                 return self.update_book_status(book.id, user.id, status_borrowed=True)
 
         raise ValueError(f"All copies of book with isbn {book_isbn} are already borrowed")
+
+# Lookup function to search and filter in the database.
+    def lookup(self, db_search, filters = None, condition = None):
+        db_search = db_search.lower().strip()
+        if db_search == 'book':
+            table = db_class.Book
+
+        elif db_search == 'user' or db_search == 'users':
+            table = db_class.User
+        elif db_search == 'status' or db_search == 'statuses':
+            table = db_class.BookStatus
+        else:
+            raise ValueError(f'{db_search} table does not exist')
+
+        data_list = []
+        book_status_search = filters in ['timestamp', 'status_borrowed',
+                'status_reserved','user_reserved', 'user_id', 'book_id']
+# In cases conditions 
+        if filters == None:
+            data = self.session.query(table).all()
+        elif book_status_search:
+            bslist = self.session.query(db_class.BookStatus).filter(\
+                getattr(db_class.BookStatus, filters) == condition).all()
+            
+            if db_search != 'status':
+                for l in bslist:
+                    v = dict(vars(getattr(l, db_search)))
+                    del v[list(v)[0]]
+                    data_list.append(v)
+        else:
+            data = self.session.query(table).filter(\
+                      getattr(table, filters) == condition).all()
+        if not book_status_search:
+            for l in data:
+                # creates a copy of the dictionary to not delete crucial data
+                v = dict(vars(l))
+                del v[list(v)[0]]
+                data_list.append(v)
+        pprint(data_list)
+        return data_list
+       
+#   param for looking a either users or data
+#   for finding books borrowed by user need to use bookstatus
+#   lookup(user_id = 4, borrowed)
+#
+#
+#
+#
+#

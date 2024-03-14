@@ -452,7 +452,51 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         session.query(db_class.Book).delete()
         session.query(db_class.User).delete()
         session.commit()
+
+    def testlookup(self):
+        book = Factory("book").create(self.book_data)
+        user = Factory("user").create(self.user_data)
+        session = self.db.get_session()
+        engine = self.db.get_engine()
+        handler = Datahandler(session, engine)
+
+        db_class.Book.metadata.create_all(engine)
+        db_class.User.metadata.create_all(engine)
+        db_class.BookStatus.metadata.create_all(engine)
+
+        book_id = handler.add_book(book.isbn, book.title, book.author, book.release_date)
+        book_id = handler.add_book(12345, "book.title", "book.author", 19270000)
+        book_id = handler.add_book(book.isbn, book.title, book.author, book.release_date)
+        book_id = handler.add_book(book.isbn, book.title, book.author, book.release_date)
+        user_id = handler.add_user(user.name, user.address, user.email)
+        user_id2 = handler.add_user('Dino', 'Dinoland 17','atme@dino.dn')
+        book = session.query(db_class.Book).filter_by(id = book_id).first()
+        user = session.query(db_class.User).filter_by(id = user_id).first()
+
+        handler.borrow_book(book.isbn, user.id)
+        handler.borrow_book(book.isbn, user_id2)
+
+        
+        txt1 = handler.lookup('book', 'isbn', '123')
+        self.assertEqual([{'id': 1, 'title': 'John Book', 'release_date':
+                           '1619827200', 'author': 'John Doe', 'isbn': '123'},
+                          {'id': 3, 'title': 'John Book', 'release_date': 
+                           '1619827200', 'author': 'John Doe', 'isbn': '123'},
+                              {'id': 4, 'title': 'John Book', 'release_date':
+                               '1619827200', 'author': 'John Doe', 'isbn':
+                                   '123'}], txt1)
     
+        txt2 = handler.lookup('book', 'title', 'book.title')
+        self.assertEqual([{'id': 2, 'title': 'book.title', 'release_date':
+                           '19270000', 'isbn': '12345', 'author':
+                               'book.author'}], txt2)
+    
+        txt3 = handler.lookup('user', 'status_borrowed', True)
+        self.assertEqual([{'address': '1234 Main St', 'name': 'John Doe',
+                           'id': 1, 'email': 'john@doe.com'}, {'address':
+                           'Dinoland 17', 'id': 2, 'email': 'atme@dino.dn', 
+                           'name': 'Dino'}], txt3)
+        
 class CustomTestResult(unittest.TextTestResult):
     def printErrors(self):
         self.stream.writeln("Passed: {}".format(self.testsRun - len(self.failures) - len(self.errors)))
