@@ -21,6 +21,10 @@ def cleanup(session):
             session.query(db_class.User).delete()
         except:
             pass
+        try:
+            session.query(db_class.Log).delete()
+        except:
+            pass
         session.commit()    
 
 class TestData(unittest.TestCase):
@@ -216,6 +220,7 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, f"User with id {user.id} has already borrowed a book with isbn {book.isbn}"):
             handler.borrow_book(book.isbn, user.id)
 
+
         #cleanup
         session.query(db_class.BookStatus).delete()
         session.query(db_class.Book).delete()
@@ -287,6 +292,7 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         self.assertEqual(book_status.user_id, user_id)
         self.assertEqual(book_status.user_reserved, other_user_id)
 
+
         #cleanup
         session.query(db_class.BookStatus).delete()
         session.query(db_class.Book).delete()
@@ -322,6 +328,7 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, f"Book with isbn {book.isbn} is already reserved by user with id {other_user.id}"):
             handler.reserve_book(book.isbn, other_user_id)
+
 
         #cleanup
         session.query(db_class.BookStatus).delete()

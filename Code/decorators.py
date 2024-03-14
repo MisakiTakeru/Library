@@ -13,34 +13,29 @@ def logger(func):
     engine = db.get_engine()
     @functools.wraps(func)
     def wrapper_log(*args, **kwargs):
-#        bid = 0
-#        uid = 0
-#        result = False
-        if func.__name__ == 'return_book':
-            book = session.query(db_class.Book).filter_by(id = args[1]).first()
-            uid = book.borrow_by
-        value = func(*args, **kwargs)
+        try:
+            value = func(*args, **kwargs)
+            result = True
+        except ValueError as e:
+            value = e
+            result = False
         
-        if func.__name__ == 'borrow':
+        if func.__name__ == 'borrow_book':
             uid = int(args[2])
-            if value == f'all versions of the book {args[1]} has been borrowed.':
-                result = False
-                bid = -1
+            if value == True:
+                book = session.query(db_class.Book).filter_by(isbn = args[1]).first()
+                bid = book.id
             else:
-                result = True
-                user = session.query(db_class.User).filter_by(id = int(args[2])).first()
-                bid = user.borrowed[-1]
-            
+                bid = -1
+
         elif func.__name__ == 'return_book':
             bid = args[1]
-            result = value
+            uid = args[2]
 
         elif func.__name__ == 'reserve_book':
-            book = session.query(db_class.Book).filter_by(isbn = args[1]).first()
+            book = session.query(db_class.Book).filter_by(isbn = args[1]).all()[-1]
             bid = book.id
             uid = args[2]
-            result = value
-#            isbn userid
 
         log_data = {
             'kwargs' : str(args[1:]),
@@ -54,5 +49,9 @@ def logger(func):
         session.add(log)
         session.commit()
         
-        return value
+        if isinstance(value, Exception):
+            raise ValueError(value)
+        else:
+            return value
+        
     return wrapper_log

@@ -78,7 +78,7 @@ class Datahandler:
         self.session.commit()
         return book_status.id
 
-    #@logger
+    @logger
     def reserve_book(self, book_isbn, user_id):
         book = self.session.query(db_class.Book).filter_by(isbn = book_isbn).first()
         user = self.session.query(db_class.User).filter_by(id = user_id).first()
@@ -103,7 +103,7 @@ class Datahandler:
         # if all copies are reserved, raise an error
         raise ValueError(f"All copies of book with isbn {book_isbn} are already reserved")
         
-    #@logger
+    @logger
     def return_book(self, book_id, user_id):
 
         # get list of book statuses with book_id
@@ -115,7 +115,7 @@ class Datahandler:
         
         return self.update_book_status(book_id, user_id, status_borrowed=False)
                 
-    #@logger
+    @logger
     def borrow_book(self, book_isbn, user_id):
         books = self.session.query(db_class.Book).filter_by(isbn = book_isbn).all()
         user = self.session.query(db_class.User).filter_by(id = user_id).first()
