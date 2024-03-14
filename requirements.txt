@@ -1,1 +1,2 @@
 sqlalchemy == 2.0.28
+Faker == 23.2.1
