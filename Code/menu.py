@@ -16,8 +16,8 @@ class Menu:
         db_class.BookStatus.metadata.create_all(self.engine)
 
     def print_menu(self):
-        print("1. Select User by ID")
-        print("2. Select User by Name")
+        print("1. Select Book by ID")
+        print("2. Select Book by Title")
         print("3. Borrow Book")
         print("4. Return Book")
         print("5. Reserve Book")
