@@ -14,18 +14,19 @@ class BookStatus(Base):
     book_id = Column(Integer, ForeignKey('books.id'))
     status_borrowed = Column(Boolean)
     status_reserved = Column(Boolean)
-    status_available = Column(Boolean)
+    user_reserved = Column(Integer)
 
     user = relationship('User', back_populates='book_statuses')
     book = relationship('Book', back_populates='book_statuses')
 
-    def __init__(self, timestamp, user_id, book_id, status_borrowed, status_reserved, status_available):
+    def __init__(self, timestamp, user_id, book_id, status_borrowed, status_reserved, user_reserved):
         self.timestamp = timestamp
         self.user_id = user_id
         self.book_id = book_id
         self.status_borrowed = status_borrowed
         self.status_reserved = status_reserved
-        self.status_available = status_available
+        self.user_reserved = user_reserved
+
 
 class Book(Base):
     __tablename__ = 'books'
