@@ -94,3 +94,10 @@ The current code structure is slightly different, ex. the borrow status is now a
 It contains status of when books are borrowed. 
 And has a SQLAlchemy relationship between user_id and book_id for easy lookup of who borrowed / reserved it.
 ![First draft of project](diagrams/first_draft.png)
+
+### Pyreverse Diagrams
+These are the auto generated digrams using Olipy in Pyreverse
+#### Classes OLIPY
+![Classes OLIPY](diagrams/classes_OLIPY.png)
+#### Packages OLIPY
+![First draft of project](diagrams/packages_OLIPY.png)
