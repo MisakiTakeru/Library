@@ -190,7 +190,7 @@ class Datahandler:
         if user_id is None:
             books = self.session.query(db_class.Book).join(db_class.BookStatus).filter(db_class.BookStatus.status_reserved == True).all()
         else:
-            books = self.session.query(db_class.Book).join(db_class.BookStatus).filter(and_(db_class.BookStatus.user_id == user_id, db_class.BookStatus.status_reserved == True)).all()
+            books = self.session.query(db_class.Book).join(db_class.BookStatus).filter(and_(db_class.BookStatus.user_reserved == user_id, db_class.BookStatus.status_reserved == True)).all()
         if books:
             return books
         
