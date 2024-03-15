@@ -135,6 +135,7 @@ class Datahandler:
 # Lookup function to search and filter in the database.
     def lookup(self, db_search, filters = None, condition = None):
         db_search = db_search.lower().strip()
+# First finds out which table to look at
         if db_search == 'book':
             table = db_class.Book
 
