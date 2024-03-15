@@ -2,6 +2,7 @@ from faker import Faker as fk
 from handler import Datahandler
 from singletonDatabaseConnect import SingletonDatabaseConnect
 import db_class
+import os
 
 class Menu:
     def __init__(self):
@@ -25,12 +26,21 @@ class Menu:
         print("7. Add book")
         print("8. Generate Fake Users")
         print("9. Generate Fake Books")
+        print("10. Get all borrowed books")
+        print("11. Get all reserved books")
+        print("12. Get all books")
+        print("13. Get all users")
+        print("x. Logout")
         print("0. Exit")
     
     def print_login_menu(self):
         print("1. Select User by ID")
         print("2. Select User by Name")
         print("3. Add and use user")
+        print("4. Get all users")
+        print("8. Generate Fake Users")
+        print("9. Generate Fake Books")
+        print("0. Exit")
 
     def generate_fake_users(self, amount):
         try:
@@ -61,102 +71,162 @@ class Menu:
             self.handler.add_book(isbn, title, author, release_date)
         return f"{amount} books added"
 
-menu_options = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9" "x"]
-login_menu_options = ["0", "1", "2", "3"]
+menu_options = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "x"]
+login_menu_options = ["0", "1", "2", "3", "4", "8", "9"]
+
+m = Menu()
+user = None
 
 while True:
-    m = Menu()
-    user = None
-    if user is not None:
-        m.print_menu()
-    else:
-        m.print_login_menu()
-    choice = input("Enter choice: ")
+    try:
+        #os.system('cls' if os.name == 'nt' else 'clear') 
+        if user is not None:
+            m.print_menu()
+        else:
+            m.print_login_menu()
+        choice = input("Enter choice: ")
 
-    if user is None: # User is not logged in
-        if choice not in login_menu_options:
-            print("Invalid choice")
-            continue
-        if choice == "0": # Exit
-            break
+        if user is None: # User is not logged in
+            if choice not in login_menu_options:
+                print("Invalid choice")
+                continue
+            if choice == "0": # Exit
+                break
 
-        if choice == "1": # Select user by ID
-            user_id = input("Enter user ID: ")
-            user = m.handler.get_user_by_id(user_id)
-            print(f"Welcome {user.name}")
+            if choice == "1": # Select user by ID
+                user_id = input("Enter user ID: ")
+                user = m.handler.get_user_by_id(user_id)
+                if user is None:
+                    print("User not found")
+                    continue
+                print(f"Welcome {user['name']}")
+                continue
 
-        if choice == "2": # Select user by name
-            name = input("Enter user name: ")
-            user = m.handler.get_user_by_name(name)
-            print(f"Welcome {user.name}")
+            if choice == "2": # Select user by name
+                name = input("Enter user name: ")
+                user = m.handler.get_user_by_name(name)
+                if user is None:
+                    print("User not found")
+                    continue
+                print(f"Welcome {user['name']}")
+                continue
 
-        if choice == "3": # Add and use user
-            name = input("Enter user name: ")
-            address = input("Enter user address: ")
-            email = input("Enter user email: ")
-            m.handler.add_user(name, address, email)
-            user = m.handler.get_user_by_name(name)
-            print(f"Welcome {user.name}")
-    else: # User is logged in
-        if choice not in menu_options:
-            print("Invalid choice")
-            continue
-        if choice == "0": # Exit
-            break
-        if choice == "x": # Logout
-            print(f"Logged out of {user.name}")
-            user = None
-            continue
+            if choice == "3": # Add and use user
+                name = input("Enter user name: ")
+                address = input("Enter user address: ")
+                email = input("Enter user email: ")
+                m.handler.add_user(name, address, email)
+                user = m.handler.get_user_by_name(name)
+                print(f"Welcome {user['name']}")
+                continue
+            
+            if choice == "4": # Get all users
+                users = m.handler.get_all_users()
+                for user in users:
+                    print(f"User name: {user['name']}")
 
-        if choice == "1": # Select book by ID
-            book_id = input("Enter book ID: ")
-            book = m.handler.get_book_by_id(book_id)
-            print(f"Book title: {book.title}")
-            print(f"Book author: {book.author}")
-            print(f"Book release date: {book.release_date}")
-            print(f"Book status: {m.handler.get_book_status(book_id)}")
-        
-        if choice == "2": # Select book by title
-            book_title = input("Enter book title: ")
-            books = m.handler.get_book_by_title(book_title)
-            for book in books:
-                print(f"Book title: {book.title}")
-                print(f"Book author: {book.author}")
-                print(f"Book release date: {book.release_date}")
-                print(f"Book status: {m.handler.get_book_status(book.id)}")
+            if choice == "8": # Generate fake users
+                amount = input("Enter amount of users to generate: ")
+                print(m.generate_fake_users(amount))
 
-        if choice == "3": # Borrow book
-            user_id = user.id
-            book_isbn = input("Enter book ISBN: ")
-            m.handler.borrow_book(book_isbn, user_id)
+            if choice == "9": # Generate fake books
+                amount = input("Enter amount of books to generate: ")
+                print(m.generate_fake_books(amount))
 
-        if choice == "4": # Return book
-            user_id = user.id
-            book_id = input("Enter book ID: ")
-            m.handler.return_book(book_id, user_id)
+        else: # User is logged in
+            if choice not in menu_options:
+                print("Invalid choice")
+                continue
+            if choice == "0": # Exit
+                break
+            if choice == "x": # Logout
+                print(f"Logged out of {user['name']}")
+                user = None
+                continue
 
-        if choice == "5": # Reserve book
-            user_id = user.id
-            book_isbn = input("Enter book ISBN: ")
-            m.handler.reserve_book(book_isbn, user_id)
-        
-        if choice == "6": # Add user
-            name = input("Enter user name: ")
-            address = input("Enter user address: ")
-            email = input("Enter user email: ")
-            m.handler.add_user(name, address, email)
-        
-        if choice == "7": # Add book
-            isbn = input("Enter book ISBN: ")
-            title = input("Enter book title: ")
-            author = input("Enter book author: ")
-            release_date = input("Enter book release date: ")
-            m.handler.add_book(isbn, title, author, release_date)
+            if choice == "1": # Select book by ID
+                book_id = input("Enter book ID: ")
+                book = m.handler.get_book_by_id(book_id)
+                print(f"Book title: {book['title']}")
+                print(f"Book author: {book['author']}")
+                print(f"Book release date: {book['release_date']}")
+                print(f"Book status: {m.handler.get_book_status(book_id)}")
+            
+            if choice == "2": # Select book by title
+                book_title = input("Enter book title: ")
+                books = m.handler.get_book_by_title(book_title)
+                for book in books:
+                    print(f"Book title: {book['title']}")
+                    print(f"Book author: {book['author']}")
+                    print(f"Book release date: {book['release_date']}")
+                    print(f"Book status: {m.handler.get_book_status(book['id'])}")
 
-        if choice == "8": # Generate fake users
-            amount = input("Enter amount of users to generate: ")
-            print(m.generate_fake_users(amount))
+            if choice == "3": # Borrow book
+                user_id = user['id']
+                book_isbn = input("Enter book ISBN: ")
+                m.handler.borrow_book(book_isbn, user_id)
 
-        if choice == "9": # Generate fake books
-            amount = input("Enter amount of books to generate: ")
-            print(m.generate_fake_books(amount))
+            if choice == "4": # Return book
+                user_id = user['id']
+                book_id = input("Enter book ID: ")
+                m.handler.return_book(book_id, user_id)
+
+            if choice == "5": # Reserve book
+                user_id = user['id']
+                book_isbn = input("Enter book ISBN: ")
+                m.handler.reserve_book(book_isbn, user_id)
+            
+            if choice == "6": # Add user
+                name = input("Enter user name: ")
+                address = input("Enter user address: ")
+                email = input("Enter user email: ")
+                m.handler.add_user(name, address, email)
+            
+            if choice == "7": # Add book
+                isbn = input("Enter book ISBN: ")
+                title = input("Enter book title: ")
+                author = input("Enter book author: ")
+                release_date = input("Enter book release date: ")
+                m.handler.add_book(isbn, title, author, release_date)
+
+            if choice == "8": # Generate fake users
+                amount = input("Enter amount of users to generate: ")
+                print(m.generate_fake_users(amount))
+
+            if choice == "9": # Generate fake books
+                amount = input("Enter amount of books to generate: ")
+                print(m.generate_fake_books(amount))
+            
+            if choice == "10":
+                #get all borrowed books
+                user_id = user['id']
+                borrowed_books = m.handler.get_borrowed_books(user_id)
+                if borrowed_books is None:
+                    print("No borrowed books.")
+                else:
+                    for book in borrowed_books:
+                        print(f"Book title: {book.title}")
+
+            if choice == "11":
+                #get all reserved books
+                user_id = user['id']
+                reserved_books = m.handler.get_reserved_books(user_id)
+                if reserved_books is None:
+                    print("No reserved books.")
+                else:
+                    for book in reserved_books:
+                        print(f"Book title: {book.title}")
+            
+            if choice == "12":
+                #get all books
+                books = m.handler.get_all_books()
+                for book in books:
+                    print(f"Book title: {book['title']}")
+            
+            if choice == "13":
+                #get all users
+                users = m.handler.get_all_users()
+                for user in users:
+                    print(f"User name: {user['name']}")
+    except ValueError as e:
+        print(f"{e}")
