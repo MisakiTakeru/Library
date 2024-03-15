@@ -69,18 +69,18 @@ Status | Requirement
 ✅| Return book
 ✅| Reserve book
 ##### Advanced requirements
-Status | Requirement
-:---:| ---
+Status | Requirement | Comment
+:---:| --- | --- 
 ✅| Decorator-pattern for logging
-✅| Strategy-pattern for lookup
-❌| Observer-pattern to notify user of available books
+🍊| Strategy-pattern for lookup | Almost adheres to the strategy-pattern
+❌| Observer-pattern to notify user of available books | No time to implement
 ##### Misc requirements
 Status | Requirement
 :---:| ---
 ✅| Terminal menu for user interaction
 ✅| Uses faker to generate data
-🔶| User can get rapport of borrowed or reserved books
-🔶| Documentation with UML-Diagrams
+✅| User can get rapport of borrowed or reserved books
+✅| Documentation with UML-Diagrams
 ✅| Unit tests
 
 
