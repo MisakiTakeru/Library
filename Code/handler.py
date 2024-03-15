@@ -152,13 +152,16 @@ class Datahandler:
         if users:
             return users
         
-    def get_user_by_id(self, user_id):
-        users = self.lookup('user', 'id', user_id)
-        if users:
-            return users[0]
-        else:
-            return None
+    def get_book_by_id(self, book_id):
+        books = self.lookup('book', 'id', book_id)
+        if books:
+            return books[0]
     
+    def get_book_by_isbn(self, isbn):
+        books = self.lookup('book', 'isbn', isbn)
+        if books:
+            return books[0]
+        
     def get_book_by_title(self, title):
         books = self.lookup('book', 'title', title)
         if books:
