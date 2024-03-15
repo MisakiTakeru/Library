@@ -137,15 +137,11 @@ class Datahandler:
         users = self.lookup('user', 'id', user_id)
         if users:
             return users[0]
-        else:
-            return None
 
     def get_user_by_name(self, name):
         users = self.lookup('user', 'name', name)
         if users:
             return users[0]
-        else:
-            return None
     
     def get_all_users(self):
         users = self.lookup('user')
@@ -171,6 +167,16 @@ class Datahandler:
         books = self.lookup('book')
         if books:
             return books
+    
+    def get_book_status_by_id(self, book_status_id):
+        book_statuses = self.lookup('status', 'id', book_status_id)
+        if book_statuses:
+            return book_statuses[0]
+    
+    def get_all_book_statuses(self):
+        book_statuses = self.lookup('status')
+        if book_statuses:
+            return book_statuses
     
     def get_borrowed_books(self, user_id=None):
         if user_id is None:
