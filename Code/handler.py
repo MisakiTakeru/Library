@@ -5,6 +5,7 @@ from factory import Factory
 from sqlalchemy import update
 from decorators import logger
 import time
+from sqlalchemy import and_
 from pprint import pprint
 
 class Datahandler:
@@ -132,6 +133,58 @@ class Datahandler:
 
         raise ValueError(f"All copies of book with isbn {book_isbn} are already borrowed")
 
+    def get_user_by_id(self, user_id):
+        users = self.lookup('user', 'id', user_id)
+        if users:
+            return users[0]
+        else:
+            return None
+
+    def get_user_by_name(self, name):
+        users = self.lookup('user', 'name', name)
+        if users:
+            return users[0]
+        else:
+            return None
+    
+    def get_all_users(self):
+        users = self.lookup('user')
+        if users:
+            return users
+        
+    def get_user_by_id(self, user_id):
+        users = self.lookup('user', 'id', user_id)
+        if users:
+            return users[0]
+        else:
+            return None
+    
+    def get_book_by_title(self, title):
+        books = self.lookup('book', 'title', title)
+        if books:
+            return books[0]
+        
+    def get_all_books(self):
+        books = self.lookup('book')
+        if books:
+            return books
+    
+    def get_borrowed_books(self, user_id=None):
+        if user_id is None:
+            books = self.session.query(db_class.Book).join(db_class.BookStatus).filter(db_class.BookStatus.status_borrowed == True).all()
+        else:
+            books = self.session.query(db_class.Book).join(db_class.BookStatus).filter(and_(db_class.BookStatus.user_id == user_id, db_class.BookStatus.status_borrowed == True)).all()
+        if books:
+            return books
+
+    def get_reserved_books(self, user_id=None):
+        if user_id is None:
+            books = self.session.query(db_class.Book).join(db_class.BookStatus).filter(db_class.BookStatus.status_reserved == True).all()
+        else:
+            books = self.session.query(db_class.Book).join(db_class.BookStatus).filter(and_(db_class.BookStatus.user_id == user_id, db_class.BookStatus.status_reserved == True)).all()
+        if books:
+            return books
+        
 # Lookup function to search and filter in the database.
     def lookup(self, db_search, filters = None, condition = None):
         db_search = db_search.lower().strip()
