@@ -99,10 +99,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         session.commit()
 
         self.assertTrue(user.id)
-
-        #cleanup
-        session.query(db_class.User).delete()
-        session.commit()
     
     def test_insert_book(self):
         factory = Factory("book")
@@ -116,10 +112,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         session.commit()
 
         self.assertTrue(book.id)
-
-        #cleanup
-        session.query(db_class.Book).delete()
-        session.commit()
 
     def test_insert_book_with_status(self):
         factory = Factory("book")
@@ -138,11 +130,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         self.assertTrue(book_id == 1)
         self.assertEqual(book_statuses[0].book_id, book_id)
         self.assertFalse(book_statuses[0].status_borrowed)
-
-        #cleanup
-        session.query(db_class.BookStatus).delete()
-        session.query(db_class.Book).delete()
-        session.commit()
     
     def test_insert_user(self):
         factory = Factory("user")
@@ -157,11 +144,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         user_id = handler.add_user(user.name, user.address, user.email)
 
         self.assertTrue(user_id == 1)
-
-        #cleanup
-        session.query(db_class.BookStatus).delete()
-        session.query(db_class.User).delete()
-        session.commit()
     
 ###########
 # Test borrow_book
@@ -188,12 +170,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         book_status = session.query(db_class.BookStatus).filter_by(book_id=book_id).first()
         self.assertTrue(book_status.status_borrowed)
         self.assertFalse(book_status.status_reserved)
-
-        #cleanup
-        session.query(db_class.BookStatus).delete()
-        session.query(db_class.Book).delete()
-        session.query(db_class.User).delete()
-        session.commit()
     
     def test_borrow_book_already_borrowed_by_yourself(self):
         book = Factory("book").create(self.book_data)
@@ -220,13 +196,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, f"User with id {user.id} has already borrowed a book with isbn {book.isbn}"):
             handler.borrow_book(book.isbn, user.id)
 
-
-        #cleanup
-        session.query(db_class.BookStatus).delete()
-        session.query(db_class.Book).delete()
-        session.query(db_class.User).delete()
-        session.commit()
-
     def test_borrow_book_all_copies_borrowed(self):
         book = Factory("book").create(self.book_data)
         user = Factory("user").create(self.user_data)
@@ -247,20 +216,12 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         user = session.query(db_class.User).filter_by(id = user_id).first()
         other_user = session.query(db_class.User).filter_by(id = other_user_id).first()
 
-
         handler.borrow_book(book.isbn, user.id)
-
-
 
         # ValueError(f"All copies of book with isbn {book_isbn} are already borrowed")
         with self.assertRaisesRegex(ValueError, f"All copies of book with isbn {book.isbn} are already borrowed"):
             handler.borrow_book(book.isbn, other_user.id)
 
-        #cleanup
-        session.query(db_class.BookStatus).delete()
-        session.query(db_class.Book).delete()
-        session.query(db_class.User).delete()
-        session.commit()
 
 ###########
 # Test reserve_book
@@ -291,13 +252,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         self.assertTrue(book_status.status_reserved)
         self.assertEqual(book_status.user_id, user_id)
         self.assertEqual(book_status.user_reserved, other_user_id)
-
-
-        #cleanup
-        session.query(db_class.BookStatus).delete()
-        session.query(db_class.Book).delete()
-        session.query(db_class.User).delete()
-        session.commit()
     
     def test_reserve_book_already_reserved_by_user(self):
         book = Factory("book").create(self.book_data)
@@ -319,22 +273,12 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         user = session.query(db_class.User).filter_by(id = user_id).first()
         other_user = session.query(db_class.User).filter_by(id = other_user_id).first()
 
-
         handler.borrow_book(book.isbn, user_id)
 
-        
         handler.reserve_book(book.isbn, other_user_id)
         
-
         with self.assertRaisesRegex(ValueError, f"Book with isbn {book.isbn} is already reserved by user with id {other_user.id}"):
             handler.reserve_book(book.isbn, other_user_id)
-
-
-        #cleanup
-        session.query(db_class.BookStatus).delete()
-        session.query(db_class.Book).delete()
-        session.query(db_class.User).delete()
-        session.commit()
 
     def test_reserve_book_ask_to_borrow_instead_of_reserve(self):
         book = Factory("book").create(self.book_data)
@@ -356,12 +300,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         #raise ValueError(f"User with id {user_id} should borrow book with id {book.id} instead of reserving it")
         with self.assertRaisesRegex(ValueError, f"User with id {user.id} should borrow book with id {book.id} instead of reserving it"):
             handler.reserve_book(book.isbn, user.id)
-
-        #cleanup
-        session.query(db_class.BookStatus).delete()
-        session.query(db_class.Book).delete()
-        session.query(db_class.User).delete()
-        session.commit()
 
     def test_reserve_book_all_copies_reserved(self):
         book = Factory("book").create(self.book_data)
@@ -421,12 +359,6 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         self.assertFalse(book_status.status_borrowed)
         self.assertFalse(book_status.status_reserved)
 
-        #cleanup
-        session.query(db_class.BookStatus).delete()
-        session.query(db_class.Book).delete()
-        session.query(db_class.User).delete()
-        session.commit()
-
     def test_return_book_not_borrowed(self):
         book = Factory("book").create(self.book_data)
         user = Factory("user").create(self.user_data)
@@ -447,16 +379,11 @@ class TestSingletonDatabaseConnect(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, f"Book with id {book.id} is already returned by user with id {user.id}"):
             handler.return_book(book.id, user.id)
 
-        #cleanup
-        session.query(db_class.BookStatus).delete()
-        session.query(db_class.Book).delete()
-        session.query(db_class.User).delete()
-        session.commit()
-
     def testlookup(self):
         book = Factory("book").create(self.book_data)
         user = Factory("user").create(self.user_data)
         session = self.db.get_session()
+        cleanup(session)
         engine = self.db.get_engine()
         handler = Datahandler(session, engine)
 
